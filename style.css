@@ -1,0 +1,143 @@
+@font-face {
+  font-family: "ABC Diatype";
+  src: local("ABC Diatype"), local("ABCDiatype-Regular"),
+       url("fonts/ABCDiatype-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --margin: 25px;
+  --leading: 1.33;
+  --space: calc(1em * var(--leading)); /* one empty line between text blocks */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #000;
+  color: #fff;
+}
+
+/* Cursor: outlined 4-armed star, filled over clickable items */
+:root {
+  --cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 L14.5 9.5 L23 12 L14.5 14.5 L12 23 L9.5 14.5 L1 12 L9.5 9.5 Z' fill='none' stroke='white' stroke-width='1.2' stroke-linejoin='miter'/%3E%3C/svg%3E") 12 12, auto;
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 1 L14.5 9.5 L23 12 L14.5 14.5 L12 23 L9.5 14.5 L1 12 L9.5 9.5 Z' fill='white' stroke='white' stroke-width='1.2' stroke-linejoin='miter'/%3E%3C/svg%3E") 12 12, pointer;
+}
+html, body, * { cursor: var(--cursor); }
+a, a *, button, [role="button"] { cursor: var(--cursor-pointer); }
+
+body {
+  font-family: "ABC Diatype", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12pt;
+  line-height: var(--leading);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover { color: #ff0000; }
+
+.page {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: var(--margin);
+  padding: 0 var(--margin) var(--margin);
+}
+
+/* Column 1: text, stays in place while images scroll */
+.info {
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  padding-top: var(--margin);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+
+.filters { list-style: none; }
+
+/* Star on hover, and kept on the active filter */
+.filters a::after {
+  content: " \2605";
+  font-size: 0.75em;
+  visibility: hidden;
+}
+.filters a:hover::after,
+.filters a.active::after { visibility: visible; }
+
+.empty {
+  grid-column: 1 / -1;
+  padding-top: var(--margin);
+  opacity: 0.5;
+}
+
+/* Columns 2 + 3: images */
+.images {
+  grid-column: 2 / 4;
+}
+/* Each photo sits in a frame. Until it loads, the frame holds a 3:2
+   placeholder; once loaded it takes the photo's own ratio (never cropped). */
+.photo {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #0b0b0b;
+}
+.photo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.06) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  transition: opacity 0.6s ease;
+}
+.photo img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0; /* revealed by GSAP in script.js */
+}
+.photo.loaded::before {
+  opacity: 0;
+  animation: none;
+}
+
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo::before { animation: none; }
+}
+
+/* Grid view: small thumbnails filling columns 2 + 3, each photo once */
+.grid-view .images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  align-content: start;
+  align-items: start; /* don't stretch frames; each keeps its own ratio */
+  gap: 5px;
+}
+.grid-view .images .repeat { display: none; }
+
+#sentinel {
+  grid-column: 2 / 4;
+  height: 1px;
+}
+
+@media (max-width: 800px) {
+  .page { grid-template-columns: 1fr; row-gap: calc(var(--margin) * 2); }
+  .info { position: static; }
+  .page { padding-top: 0; }
+  .images, #sentinel { grid-column: 1; }
+}
